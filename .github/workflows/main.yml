@@ -1,0 +1,48 @@
+name: my workflow
+on: [push]
+
+jobs:
+  build:
+    name: echo hello
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: install
+        run: npm install
+
+      - name: ls
+        run: ls -al
+
+      - name: test
+        run: npm run test
+
+        # - name: commit
+        #   run: |
+        #     date > generated.txt
+        #     git config user.name github-actions
+        #     git config user.email github-actions@github.com
+        #     git add .
+        #     git commit -m "generated"
+        #     git push
+
+        with:
+          github-token: ${{github.token}}
+          script: |
+            const ref = "${{github.ref}}"
+
+            await github.pulls.createReview({
+              ...context.repo,
+              pull_number,
+              body:"테스트코드를 다시 확인해주세요. ",
+              event: "REQUEST_CHANGES"
+            })
+            await github.pulls.update({
+              ...context.repo,
+              pull_number,
+              state: "closed"
+            })
+          if: failure()
